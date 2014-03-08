@@ -71,7 +71,7 @@ class Bird:
     """
     if self.fly_frame > 0:
       if self.y_coord > 1: # Only move up if we aren't at top yet
-        self.y_coord -= 1  
+        self.y_coord -= 1
       self.fly_frame -= 1  # Reduce frame count
     else:
       self.y_coord += 1    # Fall to the ground
@@ -110,7 +110,7 @@ class Pipe:
     self.pipe = curses.newwin(self.height, PIPE_WIDTH,
                               self.y_coord, self.x_coord)
     self.pipe.scrollok(1)
-    
+ 
     # Countdown and delay information
     self.delay = win_ncols + PIPE_WIDTH
     self.countdown = countdown
