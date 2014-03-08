@@ -110,7 +110,7 @@ class Pipe:
     self.pipe = curses.newwin(self.height, PIPE_WIDTH,
                               self.y_coord, self.x_coord)
     self.pipe.scrollok(1)
- 
+
     # Countdown and delay information
     self.delay = win_ncols + PIPE_WIDTH
     self.countdown = countdown
