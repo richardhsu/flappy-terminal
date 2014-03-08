@@ -274,7 +274,7 @@ class Flappy:
     # Set up the game window
     self.nlines = 40
     self.ncols = PIPE_WIDTH * 9
-    self.window = curses.newwin(self.nlines, self.ncols, 0, 0)
+    self.window = curses.newwin(self.nlines + 3, self.ncols, 0, 0)
 
   def run(self):
     """Run the Flappy Bird Game.
@@ -307,12 +307,16 @@ class Flappy:
     """
     self.window.nodelay(1)
     self.window.erase()
+    self.window.hline(self.nlines - 1, 0, '-', self.ncols)
     self.window.box()
     self.window.refresh()
 
     # Init bird and pipes
     bird = Bird(self.nlines, self.ncols)
     pipes = Pipes(self.nlines, self.ncols, bird)
+    for tpipe, bpipe in pipes.pipes:
+      self.window.overlay(tpipe.pipe)
+      self.window.overlay(bpipe.pipe)
 
     score = 0
     paused = False
@@ -329,7 +333,7 @@ class Flappy:
         elif key == ord(' '):
           bird.up()
         elif key == ord('p'):
-          self.window.addstr(1,1, "Press p to resume.")
+          self.window.addstr(self.nlines,1, "Press p to resume.")
           self.window.refresh()
           self.window.nodelay(0)
           paused = True
@@ -346,8 +350,8 @@ class Flappy:
       try:
         bird.animate()
         score += pipes.animate()
-        self.window.addstr(1,1, "Press p to pause. ")
-        self.window.addstr(2,1, "Score: {0}".format(score))
+        self.window.addstr(self.nlines,1, "Press p to pause. ")
+        self.window.addstr(self.nlines + 1,1, "Score: {0}".format(score))
       except EndGame:
         break
 
