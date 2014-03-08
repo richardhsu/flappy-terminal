@@ -7,10 +7,12 @@ import random
 import sys
 import time
 
+PIPE_MIN_HEIGHT = 4
 PIPE_WIDTH = 8
 BIRD_WIDTH = 7
 BIRD_HEIGHT = 3
 BIRD_FRAMES = 5
+PIPE_OPEN = 10
 
 class EndGame(Exception):
   pass
@@ -83,17 +85,20 @@ class Pipe:
     """
     self.x_orig = win_ncols - 8 - 1  # Written this way to remember win edge
     self.x_coord = self.x_orig
-    if is_bottom:
-      self.y_coord = win_nlines - height - 1 # Again win edge
+    self.win_nlines = win_nlines
+    self.height = height  # The height of the pipe
+    self.is_bottom = is_bottom
+
+    if self.is_bottom:
+      self.y_coord = self.win_nlines - self.height - 1 # Again win edge
     else:
       self.y_coord = 1 # Top
 
-    self.pipe = curses.newwin(height, PIPE_WIDTH, self.y_coord, self.x_coord)
+    self.pipe = curses.newwin(self.height, PIPE_WIDTH, self.y_coord, self.x_coord)
     self.pipe.scrollok(1)
-    self.is_bottom = is_bottom
-    self.height = height  # The height of the pipe
+    
 
-    self.delay = win_ncols
+    self.delay = win_ncols + PIPE_WIDTH
     self.countdown = countdown
 
   def draw(self):
@@ -140,6 +145,18 @@ class Pipe:
       if self.countdown == 0:
         self.x_coord = self.x_orig
 
+  def set_height(self, height):
+    self.pipe.erase()
+    self.pipe.refresh()
+    self.height = height
+    if self.is_bottom:
+      self.y_coord = self.win_nlines - self.height - 1 # Again win edge
+    else:
+      self.y_coord = 1 # Top
+    self.pipe.mvwin(1, 1)
+    self.pipe.refresh()
+    self.pipe.resize(self.height, PIPE_WIDTH)
+
 class Pipes:
   def __init__(self, win_nlines, win_ncols):
     # Pipes will always be 8 in width (PIPE_WIDTH)
@@ -153,8 +170,8 @@ class Pipes:
 
     init_delay = 0
     for i in range(0, self.num_pipes):
-      top_height = random.randint(4, self.win_nlines - 10 - 4)
-      bot_height = self.win_nlines - 10 - top_height
+      top_height = random.randint(PIPE_MIN_HEIGHT, self.win_nlines - PIPE_OPEN - PIPE_MIN_HEIGHT)
+      bot_height = self.win_nlines - PIPE_OPEN - top_height
       self.pipes.append([Pipe(False, top_height, init_delay,
                               self.win_nlines, self.win_ncols),
                          Pipe(True, bot_height, init_delay,
@@ -162,9 +179,15 @@ class Pipes:
       init_delay += PIPE_WIDTH * 3
 
   def animate(self):
-    for pipe_set in self.pipes:
-      pipe_set[0].animate()
-      pipe_set[1].animate()
+    for top_pipe, bot_pipe in self.pipes:
+      top_pipe.animate()
+      bot_pipe.animate()
+
+      if top_pipe.countdown == top_pipe.delay:
+         top_height = random.randint(PIPE_MIN_HEIGHT, self.win_nlines - PIPE_OPEN - PIPE_MIN_HEIGHT)
+         bot_height = self.win_nlines - PIPE_OPEN - top_height
+         top_pipe.set_height(top_height)
+         bot_pipe.set_height(bot_height)
 
   def refresh(self):
     for pipe_set in self.pipes:
@@ -180,7 +203,7 @@ class Flappy:
 
     # Set up the game window
     self.nlines = 40
-    self.ncols = 50
+    self.ncols = PIPE_WIDTH * 9
     self.window = curses.newwin(self.nlines, self.ncols, 0, 0)
 
   def run(self):
